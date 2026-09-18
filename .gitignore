@@ -1,0 +1,15 @@
+# Binary outputs
+dist/
+bin/
+*.exe
+*.pdb
+
+# Visual Studio / VS Code artifacts
+.vs/
+.vscode/
+
+# Patch files
+*.patch
+
+# Other
+.etc/
