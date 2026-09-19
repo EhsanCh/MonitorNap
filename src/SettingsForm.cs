@@ -67,8 +67,7 @@ public class SettingsForm : Form {
         numInterval = new NumericUpDown { Location = new Point(220, 84), Size = new Size(200, 22), Minimum = 1, Maximum = 10, Value = Config.CheckInterval };
 
         chkPreDim = new CheckBox {
-            Text = "Dim screen before standby (seconds):",
-            Location = new Point(15, 117),
+            Text = "Dim screen before standby (seconds):",            Location = new Point(15, 117),
             Size = new Size(260, 24),
             Checked = Config.DimLeadSeconds > 0
         };

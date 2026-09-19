@@ -13,8 +13,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Ehsan Chavoshi")]
 [assembly: AssemblyCopyright("Copyright © 2026 Ehsan Chavoshi")]
 [assembly: AssemblyDescription("Lightweight multi-monitor power management utility using VESA DDC/CI")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
 
 /// <summary>
 /// Application entry point, system tray lifecycle, and mouse idle polling loop.

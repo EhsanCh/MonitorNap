@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -17,6 +18,12 @@ public class Contributor {
 /// Standard About dialog displaying application metadata, repository link, and contributors.
 /// </summary>
 public class AboutForm : Form {
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern uint PrivateExtractIcons(string szFileName, int nIconIndex, int cxIcon, int cyIcon, IntPtr[] phicon, int[] piconid, uint nIcons, uint flags);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool DestroyIcon(IntPtr hIcon);
+
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop, IntPtr hIcon, int cxWidth, int cyWidth, uint istepIfAniCur, IntPtr hbrFlickerFreeDraw, uint diFlags);
 
@@ -41,31 +48,49 @@ public class AboutForm : Form {
 
         // App Icon Display
         PictureBox picIcon = new PictureBox {
-            Location = new Point(20, 20),
-            Size = new Size(48, 48)
+            Location = new Point(20, 16),
+            Size = new Size(64, 64)
         };
+
+        IntPtr hLargeIcon = IntPtr.Zero;
+        try {
+            IntPtr[] phicon = new IntPtr[1];
+            int[] piconid = new int[1];
+            if (PrivateExtractIcons(Application.ExecutablePath, 0, 64, 64, phicon, piconid, 1, 0) > 0) {
+                hLargeIcon = phicon[0];
+            }
+        } catch { }
+
+        this.FormClosed += (s, e) => {
+            if (hLargeIcon != IntPtr.Zero) {
+                DestroyIcon(hLargeIcon);
+            }
+        };
+
         picIcon.Paint += (s, e) => {
-            if (Program.AppIcon != null) {
+            IntPtr iconHandle = (hLargeIcon != IntPtr.Zero) ? hLargeIcon : (Program.AppIcon != null ? Program.AppIcon.Handle : IntPtr.Zero);
+            if (iconHandle != IntPtr.Zero) {
                 IntPtr hdc = e.Graphics.GetHdc();
                 try {
-                    // DI_NORMAL (0x0003) renders the icon with native Windows alpha blending at 48x48
-                    DrawIconEx(hdc, 0, 0, Program.AppIcon.Handle, picIcon.Width, picIcon.Height, 0, IntPtr.Zero, 3);
+                    // DI_NORMAL (0x0003) renders the icon with native Windows alpha blending at 64x64
+                    DrawIconEx(hdc, 0, 0, iconHandle, picIcon.Width, picIcon.Height, 0, IntPtr.Zero, 3);
                 } finally {
                     e.Graphics.ReleaseHdc(hdc);
                 }
             }
         };
+
         // Header Labels
         Label lblTitle = new Label {
             Text = "MonitorNap",
-            Location = new Point(80, 20),
+            Location = new Point(96, 20),
             AutoSize = true,
             Font = new Font(this.Font.FontFamily, 14, FontStyle.Bold)
         };
 
         Label lblVersion = new Label {
-            Text = "Version 1.0.0 (64-bit / 32-bit)",
-            Location = new Point(82, 48),
+            Text = string.Format("Version {0} ({1})", Assembly.GetExecutingAssembly().GetName().Version.ToString(3), Environment.Is64BitProcess ? "64-bit" : "32-bit"),
+            Location = new Point(98, 50),
             AutoSize = true,
             ForeColor = Color.DimGray
         };
@@ -73,7 +98,7 @@ public class AboutForm : Form {
         // Summary Description
         Label lblDesc = new Label {
             Text = "Intelligent hardware-level auto-standby power management for secondary monitors on Windows via VESA DDC/CI. Prevents desktop layout resetting while saving energy.",
-            Location = new Point(20, 85),
+            Location = new Point(20, 92),
             Size = new Size(395, 45),
             ForeColor = Color.FromArgb(50, 50, 50)
         };
@@ -81,7 +106,7 @@ public class AboutForm : Form {
         // Project Repository Link
         LinkLabel linkRepo = new LinkLabel {
             Text = "GitHub Repository: https://github.com/EhsanCh/MonitorNap",
-            Location = new Point(20, 138),
+            Location = new Point(20, 142),
             AutoSize = true,
             LinkColor = Color.FromArgb(0, 102, 204),
             ActiveLinkColor = Color.Blue,
@@ -164,4 +189,3 @@ public class AboutForm : Form {
         });
     }
 }
-
