@@ -132,10 +132,10 @@ static class Program {
 
     [STAThread]
     static void Main() {
+        NativeMethods.InitializeDpiAwareness();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         AppDomain.CurrentDomain.UnhandledException += (s, e) => {
-            MessageBox.Show("Unexpected Error: " + e.ExceptionObject.ToString(), "MonitorNap Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        };
+            MessageBox.Show("Unexpected Error: " + e.ExceptionObject.ToString(), "MonitorNap Error", MessageBoxButtons.OK, MessageBoxIcon.Error);        };
 
         // Enforce single instance execution via system Mutex
         bool createdNew;
@@ -344,20 +344,41 @@ static class Program {
         m.IdleSeconds = 0;
         HideCurtain(m);
 
+        bool powerRestored = false;
         if (m.IsOff && Config.CurrentSleepAction != SleepAction.BlackScreen && Config.CurrentSleepAction != SleepAction.DimOnly) {
             NativeMethods.SetMonitorPower(m.Bounds, 1);
+            powerRestored = true;
+        }
+
+        // Allow monitor microcontroller to complete power-state transition before sending DDC/CI commands
+        if (powerRestored) {
+            Thread.Sleep(750);
         }
 
         if (m.IsDimmed) {
-            NativeMethods.SetMonitorBrightness(m.Bounds, m.OriginalBrightness);
-            m.IsDimmed = false;
+            uint targetBrightness = (m.OriginalBrightness == 0) ? 100 : m.OriginalBrightness;
+            if (RestoreBrightnessWithVerification(m.Bounds, targetBrightness)) {
+                m.IsDimmed = false;
+            }
         }
 
         m.IsOff = false;
     }
 
-    private static void ShowCurtain(MonState m) {
-        if (!activeCurtains.ContainsKey(m.DeviceName)) {
+    private static bool RestoreBrightnessWithVerification(Rectangle bounds, uint targetBrightness) {
+        const int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            NativeMethods.SetMonitorBrightness(bounds, targetBrightness);
+            Thread.Sleep(100);
+            uint currentBrightness, maxBrightness;
+            if (NativeMethods.GetMonitorBrightness(bounds, out currentBrightness, out maxBrightness) &&
+                Math.Abs((int)currentBrightness - (int)targetBrightness) <= 2) {
+                return true;
+            }
+        }        return false;
+    }
+
+    private static void ShowCurtain(MonState m) {        if (!activeCurtains.ContainsKey(m.DeviceName)) {
             CurtainForm curtain = new CurtainForm(m.Bounds);
             activeCurtains[m.DeviceName] = curtain;
             curtain.Show();

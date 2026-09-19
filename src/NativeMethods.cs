@@ -48,28 +48,28 @@ public static class NativeMethods {
     private static uint outCurrentValue;
     private static uint outMaxValue;
     private static bool opSucceeded;
+    private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
     /// <summary>
-    /// Callback executed by EnumDisplayMonitors to identify and manipulate target physical panels.    /// </summary>
+    /// Callback executed by EnumDisplayMonitors to identify and manipulate target physical panels.
+    /// </summary>
     private static bool EnumCallback(IntPtr hMon, IntPtr hdc, ref RECT rect, IntPtr data) {
         try {
             if (rect.left == targetLeft && rect.top == targetTop) {
-                uint count = 0;
-                if (GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, out count) && count > 0) {
+                uint count = 0;                if (GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, out count) && count > 0) {
                     PHYSICAL_MONITOR[] phys = new PHYSICAL_MONITOR[count];
                     if (GetPhysicalMonitorsFromHMONITOR(hMon, count, phys)) {
                         for (int i = 0; i < count; i++) {
                             try {
                                 if (currentOp == MonitorOp.SetPower) {
                                     // VESA VCP Code 0xD6: Power Mode (1 = Power On, 4 = Standby / Power Off)
-                                    SetVCPFeature(phys[i].hPhysicalMonitor, 0xD6, targetValue);
+                                    opSucceeded = SetVCPFeature(phys[i].hPhysicalMonitor, 0xD6, targetValue);
                                 } else if (currentOp == MonitorOp.SetBrightness) {
                                     // VESA VCP Code 0x10: Luminance / Brightness
-                                    SetVCPFeature(phys[i].hPhysicalMonitor, 0x10, targetValue);
+                                    opSucceeded = SetVCPFeature(phys[i].hPhysicalMonitor, 0x10, targetValue);
                                 } else if (currentOp == MonitorOp.GetBrightness) {
                                     uint codeType, curVal, maxVal;
-                                    if (GetVCPFeatureAndVCPFeatureReply(phys[i].hPhysicalMonitor, 0x10, out codeType, out curVal, out maxVal)) {
-                                        outCurrentValue = curVal;
+                                    if (GetVCPFeatureAndVCPFeatureReply(phys[i].hPhysicalMonitor, 0x10, out codeType, out curVal, out maxVal)) {                                        outCurrentValue = curVal;
                                         outMaxValue = maxVal;
                                         opSucceeded = true;
                                     }
@@ -84,34 +84,50 @@ public static class NativeMethods {
     }
 
     /// <summary>
+    /// Initializes Per-Monitor V2 DPI awareness to avoid virtualized coordinate mismatch.
+    /// </summary>
+    public static void InitializeDpiAwareness() {
+        try {
+            SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        } catch { }
+    }
+
+    /// <summary>
     /// Sends hardware DDC/CI power state command to the display at given desktop coordinates.
     /// </summary>
-    public static void SetMonitorPower(Rectangle bounds, uint powerState) {
+    public static bool SetMonitorPower(Rectangle bounds, uint powerState) {
         try {
             targetLeft = bounds.Left;
             targetTop = bounds.Top;
             currentOp = MonitorOp.SetPower;
             targetValue = powerState;
+            opSucceeded = false;
             EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, enumCallbackDelegate, IntPtr.Zero);
-        } catch { }
+            return opSucceeded;
+        } catch {
+            return false;
+        }
     }
 
     /// <summary>
     /// Sets display hardware luminance via VESA DDC/CI VCP Code 0x10.
     /// </summary>
-    public static void SetMonitorBrightness(Rectangle bounds, uint brightness) {
+    public static bool SetMonitorBrightness(Rectangle bounds, uint brightness) {
         try {
             targetLeft = bounds.Left;
             targetTop = bounds.Top;
             currentOp = MonitorOp.SetBrightness;
             targetValue = brightness;
+            opSucceeded = false;
             EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, enumCallbackDelegate, IntPtr.Zero);
-        } catch { }
+            return opSucceeded;
+        } catch {
+            return false;
+        }
     }
 
     /// <summary>
-    /// Retrieves current and maximum hardware luminance via VESA DDC/CI VCP Code 0x10.
-    /// </summary>
+    /// Retrieves current and maximum hardware luminance via VESA DDC/CI VCP Code 0x10.    /// </summary>
     public static bool GetMonitorBrightness(Rectangle bounds, out uint currentBrightness, out uint maxBrightness) {
         currentBrightness = 100;
         maxBrightness = 100;
