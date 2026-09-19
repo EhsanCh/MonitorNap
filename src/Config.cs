@@ -20,12 +20,15 @@ public enum SleepAction {
 public class MonState {
     public string DeviceName;
     public Rectangle Bounds;
-    public int IdleSeconds = 0;    public bool IsOff = false;
+    public int IdleSeconds = 0;
+    public bool IsOff = false;
     public bool IsDimmed = false;
     public uint OriginalBrightness = 100;
     public bool IsSelected = true;
     public Form WarningFormRef = null;
-}/// <summary>
+}
+
+/// <summary>
 /// Global application settings and Windows Registry persistence manager.
 /// </summary>
 public static class Config {
@@ -51,11 +54,13 @@ public static class Config {
     public static int DimLeadSeconds = 0;      // 0 = Disabled (dimming before sleep)
 
     /// <summary>
-    /// Loads saved user configuration from CurrentUser Registry hive.    /// </summary>
+    /// Loads saved user configuration from CurrentUser Registry hive.
+    /// </summary>
     public static void LoadSettings() {
         try {
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(REG_PATH)) {
-                if (key != null) {                    IdleLimitSeconds = (int)key.GetValue("IdleLimitSeconds", 300);
+                if (key != null) {
+                    IdleLimitSeconds = (int)key.GetValue("IdleLimitSeconds", 300);
                     CheckInterval = (int)key.GetValue("CheckInterval", 2);
                     DoubleClickToggles = (int)key.GetValue("DoubleClickToggles", 1) == 1;
                     IgnoreOnFullscreen = (int)key.GetValue("IgnoreOnFullscreen", 1) == 1;
@@ -68,7 +73,9 @@ public static class Config {
                     DimLeadSeconds = (int)key.GetValue("DimLeadSeconds", 0);
 
                     object targetsObj = key.GetValue("TargetMonitors", null);
-                    if (targetsObj != null) {                        string targets = targetsObj.ToString();                        string[] arr = targets.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (targetsObj != null) {
+                        string targets = targetsObj.ToString();
+                        string[] arr = targets.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (var m in Monitors) {
                             m.IsSelected = Array.IndexOf(arr, m.DeviceName) >= 0;
                         }
@@ -80,7 +87,8 @@ public static class Config {
         }
     }
 
-    /// <summary>    /// Persists current configuration to CurrentUser Registry hive.
+    /// <summary>
+    /// Persists current configuration to CurrentUser Registry hive.
     /// </summary>
     public static void SaveSettings() {
         try {
@@ -99,7 +107,11 @@ public static class Config {
                     key.SetValue("DimLeadSeconds", DimLeadSeconds);
 
                     List<string> selected = new List<string>();
-                    foreach (var m in Monitors) {                        if (m.IsSelected) selected.Add(m.DeviceName);                    }
+                    foreach (var m in Monitors) {
+                        if (m.IsSelected) {
+                            selected.Add(m.DeviceName);
+                        }
+                    }
                     key.SetValue("TargetMonitors", string.Join(",", selected.ToArray()));
                 }
             }
@@ -108,7 +120,8 @@ public static class Config {
         }
     }
 
-    /// <summary>    /// Checks whether the application is registered to run on Windows startup.
+    /// <summary>
+    /// Checks whether the application is registered to run on Windows startup.
     /// </summary>
     public static bool IsStartupEnabled() {
         try {
@@ -121,14 +134,18 @@ public static class Config {
         }
     }
 
-    /// <summary>    /// Enables or disables automatic startup with Windows via Registry Run key.
+    /// <summary>
+    /// Enables or disables automatic startup with Windows via Registry Run key.
     /// </summary>
     public static void SetStartup(bool enable) {
         try {
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(REG_RUN_PATH, true)) {
                 if (key != null) {
-                    if (enable) key.SetValue(APP_NAME, "\"" + Application.ExecutablePath + "\"");
-                    else key.DeleteValue(APP_NAME, false);
+                    if (enable) {
+                        key.SetValue(APP_NAME, "\"" + Application.ExecutablePath + "\"");
+                    } else {
+                        key.DeleteValue(APP_NAME, false);
+                    }
                 }
             }
         } catch (Exception ex) {

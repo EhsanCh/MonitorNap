@@ -4,7 +4,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-/// <summary>/// Represents an individual project contributor with GitHub handle and profile link.
+/// <summary>
+/// Represents an individual project contributor with GitHub handle and profile link.
 /// </summary>
 public class Contributor {
     public string Name;
@@ -21,7 +22,8 @@ public class AboutForm : Form {
 
     // Extensible registry for active and future contributors
     private static readonly Contributor[] Contributors = new Contributor[] {
-        new Contributor {            Name = "Ehsan Chavoshi",
+        new Contributor {
+            Name = "Ehsan Chavoshi",
             Handle = "@EhsanCh",
             Url = "https://github.com/EhsanCh"
         }
@@ -54,7 +56,8 @@ public class AboutForm : Form {
             }
         };
         // Header Labels
-        Label lblTitle = new Label {            Text = "MonitorNap",
+        Label lblTitle = new Label {
+            Text = "MonitorNap",
             Location = new Point(80, 20),
             AutoSize = true,
             Font = new Font(this.Font.FontFamily, 14, FontStyle.Bold)

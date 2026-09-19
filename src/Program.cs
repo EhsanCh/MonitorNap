@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
 using System.Text;
-using System.Runtime.InteropServices;using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using System.Threading;
 using Microsoft.Win32;
 // Assembly metadata embedded into the compiled Windows executable
@@ -34,7 +35,8 @@ static class Program {
     private static bool scanWindowFound;
 
     /// <summary>
-    /// Scans connected monitors, identifies non-primary displays, and loads user selections.    /// </summary>
+    /// Scans connected monitors, identifies non-primary displays, and loads user selections.
+    /// </summary>
     public static void RefreshMonitors() {
         Dictionary<string, bool> previousPowerStates = new Dictionary<string, bool>();
         Dictionary<string, bool> previousDimStates = new Dictionary<string, bool>();
@@ -47,7 +49,8 @@ static class Program {
             HideWarning(m);
         }
 
-        Config.Monitors.Clear();        foreach (Screen s in Screen.AllScreens) {
+        Config.Monitors.Clear();
+        foreach (Screen s in Screen.AllScreens) {
             if (!s.Primary) {
                 bool wasOff = false;
                 bool wasDimmed = false;
@@ -72,13 +75,22 @@ static class Program {
         foreach (var kvp in activeCurtains) {
             MonState matchingMon = null;
             foreach (var m in Config.Monitors) {
-                if (m.DeviceName == kvp.Key) { matchingMon = m; break; }
+                if (m.DeviceName == kvp.Key) {
+                    matchingMon = m;
+                    break;
+                }
             }
-            if (matchingMon != null) kvp.Value.Bounds = matchingMon.Bounds;
-            else orphanCurtains.Add(kvp.Key);
+            if (matchingMon != null) {
+                kvp.Value.Bounds = matchingMon.Bounds;
+            } else {
+                orphanCurtains.Add(kvp.Key);
+            }
         }
         foreach (var name in orphanCurtains) {
-            try { activeCurtains[name].Close(); activeCurtains[name].Dispose(); } catch { }
+            try {
+                activeCurtains[name].Close();
+                activeCurtains[name].Dispose();
+            } catch { }
             activeCurtains.Remove(name);
         }
 
@@ -89,7 +101,9 @@ static class Program {
     /// Synchronizes system tray tooltip text with current operational state.
     /// </summary>
     public static void UpdateStatus() {
-        if (TrayIcon == null) return;
+        if (TrayIcon == null) {
+            return;
+        }
         if (Config.Monitors.Count == 0) {
             TrayIcon.Text = "MonitorNap: No Secondary Display";
         } else if (Config.IsPaused) {
@@ -135,7 +149,8 @@ static class Program {
         NativeMethods.InitializeDpiAwareness();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         AppDomain.CurrentDomain.UnhandledException += (s, e) => {
-            MessageBox.Show("Unexpected Error: " + e.ExceptionObject.ToString(), "MonitorNap Error", MessageBoxButtons.OK, MessageBoxIcon.Error);        };
+            MessageBox.Show("Unexpected Error: " + e.ExceptionObject.ToString(), "MonitorNap Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        };
 
         // Enforce single instance execution via system Mutex
         bool createdNew;
@@ -152,7 +167,9 @@ static class Program {
         try {
             IntPtr hModule = GetModuleHandle(null);
             IntPtr hIcon = LoadIcon(hModule, new IntPtr(32512));
-            if (hIcon == IntPtr.Zero) hIcon = LoadIcon(hModule, new IntPtr(1));
+            if (hIcon == IntPtr.Zero) {
+                hIcon = LoadIcon(hModule, new IntPtr(1));
+            }
             AppIcon = (hIcon != IntPtr.Zero) ? (Icon)Icon.FromHandle(hIcon).Clone() : SystemIcons.Application;
         } catch {
             AppIcon = SystemIcons.Application;
@@ -168,11 +185,14 @@ static class Program {
         SystemEvents.DisplaySettingsChanged += (s, e) => RefreshMonitors();
         SystemEvents.SessionEnding += (s, e) => {
             foreach (var m in Config.Monitors) {
-                if (m.IsSelected && (m.IsOff || m.IsDimmed)) WakeMonitor(m);
+                if (m.IsSelected && (m.IsOff || m.IsDimmed)) {
+                    WakeMonitor(m);
+                }
             }
         };
         // Build context menu
-        ContextMenuStrip menu = new ContextMenuStrip();        ToolStripMenuItem onItem = (ToolStripMenuItem)menu.Items.Add("Turn Secondary ON");
+        ContextMenuStrip menu = new ContextMenuStrip();
+        ToolStripMenuItem onItem = (ToolStripMenuItem)menu.Items.Add("Turn Secondary ON");
         ToolStripMenuItem offItem = (ToolStripMenuItem)menu.Items.Add("Turn Secondary OFF");
         menu.Items.Add(new ToolStripSeparator());
         toggleItem = (ToolStripMenuItem)menu.Items.Add("Pause Auto-Sleep");
@@ -194,17 +214,22 @@ static class Program {
                 ToggleMonitorsPower();
             } else {
                 ShowSettings();
-            }        };
+            }
+        };
         onItem.Click += (s, e) => {
             foreach (var m in Config.Monitors) {
-                if (m.IsSelected) WakeMonitor(m);
+                if (m.IsSelected) {
+                    WakeMonitor(m);
+                }
             }
             UpdateStatus();
         };
 
         offItem.Click += (s, e) => {
             foreach (var m in Config.Monitors) {
-                if (m.IsSelected) SleepMonitor(m);
+                if (m.IsSelected) {
+                    SleepMonitor(m);
+                }
             }
             UpdateStatus();
         };
@@ -216,32 +241,45 @@ static class Program {
                     if (m.IsSelected && (m.IsOff || m.IsDimmed || m.WarningFormRef != null)) {
                         WakeMonitor(m);
                     }
-                }            }            UpdateStatus();
+                }
+            }
+            UpdateStatus();
         };
 
         settingsItem.Click += (s, e) => ShowSettings();
         aboutItem.Click += (s, e) => ShowAbout();
 
         exitItem.Click += (s, e) => {
-            if (hotkeySink != null) {                hotkeySink.Dispose();
+            if (hotkeySink != null) {
+                hotkeySink.Dispose();
                 hotkeySink = null;
             }
-            foreach (var m in Config.Monitors) {
-                HideWarning(m);
-                if (m.IsSelected && (m.IsOff || m.IsDimmed)) WakeMonitor(m);
-            }            if (timer != null) timer.Stop();
-            TrayIcon.Visible = false;            TrayIcon.Dispose();            Application.Exit();
+            foreach (var m in Config.Monitors) {                HideWarning(m);
+                if (m.IsSelected && (m.IsOff || m.IsDimmed)) {
+                    WakeMonitor(m);
+                }
+            }
+            if (timer != null) {
+                timer.Stop();
+            }
+            TrayIcon.Visible = false;
+            TrayIcon.Dispose();
+            Application.Exit();
         };
 
         // Initialize mouse activity and idle tracking timer
         timer = new System.Windows.Forms.Timer();
         timer.Interval = Config.CheckInterval * 1000;
         timer.Tick += (s, e) => {
-            if (Config.IsPaused) return;
+            if (Config.IsPaused) {
+                return;
+            }
 
             Point cursor = Cursor.Position;
             foreach (var m in Config.Monitors) {
-                if (!m.IsSelected) continue;
+                if (!m.IsSelected) {
+                    continue;
+                }
 
                 if (m.Bounds.Contains(cursor)) {
                     // Mouse cursor entered target monitor - wake immediately
@@ -254,15 +292,21 @@ static class Program {
                     if (!m.IsOff) {
                         // Suppress sleep when target monitor has a full-screen window
                         if (Config.IgnoreOnFullscreen && NativeMethods.IsWindowFullscreenOnScreen(m.Bounds)) {
-                            if (m.IsDimmed || m.WarningFormRef != null) WakeMonitor(m);
-                            else m.IdleSeconds = 0;
+                            if (m.IsDimmed || m.WarningFormRef != null) {
+                                WakeMonitor(m);
+                            } else {
+                                m.IdleSeconds = 0;
+                            }
                             continue;
                         }
 
                         // Suppress sleep when target monitor contains a window matching user keywords
                         if (IsIgnoredWindowOnScreen(m.Bounds)) {
-                            if (m.IsDimmed || m.WarningFormRef != null) WakeMonitor(m);
-                            else m.IdleSeconds = 0;
+                            if (m.IsDimmed || m.WarningFormRef != null) {
+                                WakeMonitor(m);
+                            } else {
+                                m.IdleSeconds = 0;
+                            }
                             continue;
                         }
 
@@ -282,7 +326,9 @@ static class Program {
                         // Pre-standby hardware dimming if configured
                         int dimLead = Math.Min(Config.DimLeadSeconds, Config.IdleLimitSeconds);
                         if (Config.DimLeadSeconds > 0 && m.IdleSeconds >= (Config.IdleLimitSeconds - dimLead) && m.IdleSeconds < Config.IdleLimitSeconds) {
-                            if (!m.IsDimmed) DimMonitor(m);
+                            if (!m.IsDimmed) {
+                                DimMonitor(m);
+                            }
                         }
 
                         if (m.IdleSeconds >= Config.IdleLimitSeconds) {
@@ -290,7 +336,8 @@ static class Program {
                             SleepMonitor(m);
                         }
                     }
-                }            }
+                }
+            }
         };
         timer.Start();
 
@@ -301,15 +348,17 @@ static class Program {
         }
         try {
             singleInstanceMutex.ReleaseMutex();
-        } catch { }        singleInstanceMutex.Close();
+        } catch { }
+        singleInstanceMutex.Close();
     }
 
     public static void UpdateTimerInterval() {
-        if (timer != null) timer.Interval = Config.CheckInterval * 1000;
+        if (timer != null) {
+            timer.Interval = Config.CheckInterval * 1000;
+        }
     }
 
-    public static void UpdateHotkey() {
-        if (hotkeySink != null) {
+    public static void UpdateHotkey() {        if (hotkeySink != null) {
             hotkeySink.Register(Config.HotkeyModifiers, Config.HotkeyKey);
         }
     }
@@ -317,18 +366,25 @@ static class Program {
     public static void ToggleMonitorsPower() {
         bool anyOff = false;
         foreach (var m in Config.Monitors) {
-            if (m.IsSelected && (m.IsOff || m.IsDimmed)) { anyOff = true; break; }
+            if (m.IsSelected && (m.IsOff || m.IsDimmed)) {
+                anyOff = true;
+                break;
+            }
         }
         foreach (var m in Config.Monitors) {
             if (m.IsSelected) {
-                if (anyOff) WakeMonitor(m);
-                else SleepMonitor(m);
+                if (anyOff) {
+                    WakeMonitor(m);
+                } else {
+                    SleepMonitor(m);
+                }
             }
         }
         UpdateStatus();
     }
 
-    public static void DimMonitor(MonState m) {        uint curBrightness, maxBrightness;
+    public static void DimMonitor(MonState m) {
+        uint curBrightness, maxBrightness;
         if (NativeMethods.GetMonitorBrightness(m.Bounds, out curBrightness, out maxBrightness)) {
             m.OriginalBrightness = curBrightness;
         }
@@ -339,8 +395,11 @@ static class Program {
     public static void SleepMonitor(MonState m) {
         HideWarning(m);
         if (Config.CurrentSleepAction == SleepAction.DimOnly) {
-            if (!m.IsDimmed) DimMonitor(m);
-            m.IsOff = true;        } else if (Config.CurrentSleepAction == SleepAction.BlackScreen) {
+            if (!m.IsDimmed) {
+                DimMonitor(m);
+            }
+            m.IsOff = true;
+        } else if (Config.CurrentSleepAction == SleepAction.BlackScreen) {
             ShowCurtain(m);
             m.IsOff = true;
         } else {
@@ -355,7 +414,8 @@ static class Program {
         HideWarning(m);
 
         bool powerRestored = false;
-        if (m.IsOff && Config.CurrentSleepAction != SleepAction.BlackScreen && Config.CurrentSleepAction != SleepAction.DimOnly) {            NativeMethods.SetMonitorPower(m.Bounds, 1);
+        if (m.IsOff && Config.CurrentSleepAction != SleepAction.BlackScreen && Config.CurrentSleepAction != SleepAction.DimOnly) {
+            NativeMethods.SetMonitorPower(m.Bounds, 1);
             powerRestored = true;
         }
 
@@ -384,10 +444,12 @@ static class Program {
                 Math.Abs((int)currentBrightness - (int)targetBrightness) <= 2) {
                 return true;
             }
-        }        return false;
+        }
+        return false;
     }
 
-    private static void ShowCurtain(MonState m) {        if (!activeCurtains.ContainsKey(m.DeviceName)) {
+    private static void ShowCurtain(MonState m) {
+        if (!activeCurtains.ContainsKey(m.DeviceName)) {
             CurtainForm curtain = new CurtainForm(m.Bounds);
             activeCurtains[m.DeviceName] = curtain;
             curtain.Show();
@@ -470,7 +532,8 @@ static class Program {
                 Font = new Font(this.Font.FontFamily, 11F, FontStyle.Bold),
                 ForeColor = Color.Gold,
                 Text = GetWarningText(remainingSeconds)
-            };            this.Controls.Add(lblText);
+            };
+            this.Controls.Add(lblText);
         }
 
         public void UpdateCountdown(int remainingSeconds) {
@@ -503,23 +566,34 @@ static class Program {
         }
     }
 
-    private static bool ScanWindowsCallback(IntPtr hWnd, IntPtr lParam) {        try {
-            if (!NativeMethods.IsWindowVisible(hWnd)) return true;
+    private static bool ScanWindowsCallback(IntPtr hWnd, IntPtr lParam) {
+        try {
+            if (!NativeMethods.IsWindowVisible(hWnd)) {
+                return true;
+            }
 
             NativeMethods.RECT rect;
-            if (!NativeMethods.GetWindowRect(hWnd, out rect)) return true;
+            if (!NativeMethods.GetWindowRect(hWnd, out rect)) {
+                return true;
+            }
 
             Rectangle wRect = new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
             Rectangle intersection = Rectangle.Intersect(currentScanBounds, wRect);
-            if (intersection.Width < 100 || intersection.Height < 100) return true;
+            if (intersection.Width < 100 || intersection.Height < 100) {
+                return true;
+            }
 
             int len = NativeMethods.GetWindowTextLength(hWnd);
-            if (len <= 0) return true;
+            if (len <= 0) {
+                return true;
+            }
 
             StringBuilder sb = new StringBuilder(len + 16);
             NativeMethods.GetWindowText(hWnd, sb, sb.Capacity);
             string title = sb.ToString();
-            if (string.IsNullOrEmpty(title)) return true;
+            if (string.IsNullOrEmpty(title)) {
+                return true;
+            }
 
             for (int i = 0; i < currentScanKeywords.Length; i++) {
                 string kw = currentScanKeywords[i];
@@ -533,15 +607,21 @@ static class Program {
     }
 
     public static bool IsIgnoredWindowOnScreen(Rectangle bounds) {
-        if (string.IsNullOrEmpty(Config.IgnoreKeywords)) return false;
+        if (string.IsNullOrEmpty(Config.IgnoreKeywords)) {
+            return false;
+        }
 
         string[] raw = Config.IgnoreKeywords.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
         List<string> cleanKeywords = new List<string>();
         for (int i = 0; i < raw.Length; i++) {
             string trimmed = raw[i].Trim();
-            if (trimmed.Length > 0) cleanKeywords.Add(trimmed);
+            if (trimmed.Length > 0) {
+                cleanKeywords.Add(trimmed);
+            }
         }
-        if (cleanKeywords.Count == 0) return false;
+        if (cleanKeywords.Count == 0) {
+            return false;
+        }
 
         currentScanBounds = bounds;
         currentScanKeywords = cleanKeywords.ToArray();

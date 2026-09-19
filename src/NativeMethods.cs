@@ -4,7 +4,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 /// <summary>
-/// Direct Win32 and DirectX VESA DDC/CI hardware interop definitions./// Sends low-level monitor power commands without resetting Windows desktop layout.
+/// Direct Win32 and DirectX VESA DDC/CI hardware interop definitions.
+/// Sends low-level monitor power commands without resetting Windows desktop layout.
 /// </summary>
 public static class NativeMethods {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
@@ -56,7 +57,8 @@ public static class NativeMethods {
     private static bool EnumCallback(IntPtr hMon, IntPtr hdc, ref RECT rect, IntPtr data) {
         try {
             if (rect.left == targetLeft && rect.top == targetTop) {
-                uint count = 0;                if (GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, out count) && count > 0) {
+                uint count = 0;
+                if (GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, out count) && count > 0) {
                     PHYSICAL_MONITOR[] phys = new PHYSICAL_MONITOR[count];
                     if (GetPhysicalMonitorsFromHMONITOR(hMon, count, phys)) {
                         for (int i = 0; i < count; i++) {
@@ -69,7 +71,8 @@ public static class NativeMethods {
                                     opSucceeded = SetVCPFeature(phys[i].hPhysicalMonitor, 0x10, targetValue);
                                 } else if (currentOp == MonitorOp.GetBrightness) {
                                     uint codeType, curVal, maxVal;
-                                    if (GetVCPFeatureAndVCPFeatureReply(phys[i].hPhysicalMonitor, 0x10, out codeType, out curVal, out maxVal)) {                                        outCurrentValue = curVal;
+                                    if (GetVCPFeatureAndVCPFeatureReply(phys[i].hPhysicalMonitor, 0x10, out codeType, out curVal, out maxVal)) {
+                                        outCurrentValue = curVal;
                                         outMaxValue = maxVal;
                                         opSucceeded = true;
                                     }
@@ -77,7 +80,8 @@ public static class NativeMethods {
                             } catch { }
                         }
                         DestroyPhysicalMonitors(count, phys);
-                    }                }
+                    }
+                }
             }
         } catch { }
         return true;
@@ -127,7 +131,8 @@ public static class NativeMethods {
     }
 
     /// <summary>
-    /// Retrieves current and maximum hardware luminance via VESA DDC/CI VCP Code 0x10.    /// </summary>
+    /// Retrieves current and maximum hardware luminance via VESA DDC/CI VCP Code 0x10.
+    /// </summary>
     public static bool GetMonitorBrightness(Rectangle bounds, out uint currentBrightness, out uint maxBrightness) {
         currentBrightness = 100;
         maxBrightness = 100;
@@ -146,12 +151,15 @@ public static class NativeMethods {
         return false;
     }
 
-    /// <summary>    /// Determines whether the active foreground window covers the entire target monitor.
+    /// <summary>
+    /// Determines whether the active foreground window covers the entire target monitor.
     /// </summary>
     public static bool IsWindowFullscreenOnScreen(Rectangle screenBounds) {
         try {
             IntPtr fg = GetForegroundWindow();
-            if (fg == IntPtr.Zero || fg == GetDesktopWindow() || fg == GetShellWindow()) return false;
+            if (fg == IntPtr.Zero || fg == GetDesktopWindow() || fg == GetShellWindow()) {
+                return false;
+            }
             RECT wRect;
             if (GetWindowRect(fg, out wRect)) {
                 return (wRect.left <= screenBounds.Left && wRect.top <= screenBounds.Top &&
