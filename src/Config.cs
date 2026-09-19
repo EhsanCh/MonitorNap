@@ -10,7 +10,7 @@ using Microsoft.Win32;
 /// </summary>
 public enum SleepAction {
     DimOnly = 1,
-    DimThenOff = 2,
+    Sleep = 2,
     BlackScreen = 3
 }
 
@@ -42,12 +42,13 @@ public static class Config {
     public static bool IsPaused = false;
 
     // Advanced standby and interaction preferences
-    public static SleepAction CurrentSleepAction = SleepAction.DimThenOff;
+    public static SleepAction CurrentSleepAction = SleepAction.Sleep;
     public static int HotkeyModifiers = 0; // 0 = Disabled, 1 = Alt, 2 = Ctrl, 4 = Shift, 8 = Win
     public static int HotkeyKey = 0;       // Windows Forms Keys enum value, 0 = Disabled
     public static string IgnoreKeywords = "YouTube,VLC,PotPlayer,Media Player";
     public static bool ShowWarningNotification = true;
     public static int WarningLeadSeconds = 30; // 30 seconds warning before sleep
+    public static int DimLeadSeconds = 0;      // 0 = Disabled (dimming before sleep)
 
     /// <summary>
     /// Loads saved user configuration from CurrentUser Registry hive.    /// </summary>
@@ -58,12 +59,13 @@ public static class Config {
                     CheckInterval = (int)key.GetValue("CheckInterval", 2);
                     DoubleClickToggles = (int)key.GetValue("DoubleClickToggles", 1) == 1;
                     IgnoreOnFullscreen = (int)key.GetValue("IgnoreOnFullscreen", 1) == 1;
-                    CurrentSleepAction = (SleepAction)(int)key.GetValue("SleepAction", (int)SleepAction.DimThenOff);
+                    CurrentSleepAction = (SleepAction)(int)key.GetValue("SleepAction", (int)SleepAction.Sleep);
                     HotkeyModifiers = (int)key.GetValue("HotkeyModifiers", 0);
                     HotkeyKey = (int)key.GetValue("HotkeyKey", 0);
                     IgnoreKeywords = (string)key.GetValue("IgnoreKeywords", "YouTube,VLC,PotPlayer,Media Player");
                     ShowWarningNotification = (int)key.GetValue("ShowWarningNotification", 1) == 1;
                     WarningLeadSeconds = (int)key.GetValue("WarningLeadSeconds", 30);
+                    DimLeadSeconds = (int)key.GetValue("DimLeadSeconds", 0);
 
                     object targetsObj = key.GetValue("TargetMonitors", null);
                     if (targetsObj != null) {                        string targets = targetsObj.ToString();                        string[] arr = targets.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -94,6 +96,7 @@ public static class Config {
                     key.SetValue("IgnoreKeywords", IgnoreKeywords ?? "");
                     key.SetValue("ShowWarningNotification", ShowWarningNotification ? 1 : 0);
                     key.SetValue("WarningLeadSeconds", WarningLeadSeconds);
+                    key.SetValue("DimLeadSeconds", DimLeadSeconds);
 
                     List<string> selected = new List<string>();
                     foreach (var m in Monitors) {                        if (m.IsSelected) selected.Add(m.DeviceName);                    }
