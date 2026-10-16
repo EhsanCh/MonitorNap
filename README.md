@@ -44,7 +44,7 @@ Unlike native Windows display settings which force desktop reconfiguration and r
 
 ## Installation
 
-+### Via WinGet
+### Via WinGet
 
 ```cmd
 winget install EhsanCh.MonitorNap
