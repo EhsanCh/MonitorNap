@@ -44,6 +44,14 @@ Unlike native Windows display settings which force desktop reconfiguration and r
 
 ## Installation
 
++### Via WinGet
+
+```cmd
+winget install EhsanCh.MonitorNap
+```
+
+### Manual
+
 Download the latest standalone executable from the [Releases](https://github.com/EhsanCh/MonitorNap/releases) page. MonitorNap is portable and requires no installation.
 
 ## Building
